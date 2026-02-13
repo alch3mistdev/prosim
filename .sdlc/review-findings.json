@@ -1,0 +1,60 @@
+{
+  "findings": [
+    {
+      "severity": "major",
+      "category": "errors",
+      "node_id": "sys.intervention.engine",
+      "file": "src/prosim/intervention/engine.py",
+      "line_range": [88, 111],
+      "description": "No validation that reduction percentages don't exceed 100%, which would make parameters negative",
+      "recommendation": "Clamp reduction factors to [0, 1] range before applying"
+    },
+    {
+      "severity": "major",
+      "category": "quality",
+      "node_id": "sys.simulation",
+      "file": "src/prosim/simulation/deterministic.py",
+      "line_range": [155, 170],
+      "description": "Bottleneck score formula duplicated between deterministic.py and montecarlo.py",
+      "recommendation": "Extract shared bottleneck scoring to bottleneck.py"
+    },
+    {
+      "severity": "minor",
+      "category": "quality",
+      "node_id": "sys.simulation.deterministic",
+      "file": "src/prosim/simulation/deterministic.py",
+      "line_range": [109, 110],
+      "description": "Magic numbers 1.3 and 1.6 for deterministic percentile estimates",
+      "recommendation": "Define as named constants"
+    },
+    {
+      "severity": "minor",
+      "category": "quality",
+      "node_id": "sys.parser.postprocess",
+      "file": "src/prosim/parser/postprocess.py",
+      "line_range": [71, 76],
+      "description": "Using print() for validation warnings instead of proper logging",
+      "recommendation": "Use Python logging module"
+    },
+    {
+      "severity": "minor",
+      "category": "errors",
+      "node_id": "sys.simulation.montecarlo",
+      "file": "src/prosim/simulation/montecarlo.py",
+      "line_range": [146, 150],
+      "description": "Parallel gateway only follows first edge instead of simulating parallel execution",
+      "recommendation": "Document as known limitation for v1; parallel gateways are out of scope for initial release"
+    },
+    {
+      "severity": "minor",
+      "category": "quality",
+      "node_id": "sys.simulation.montecarlo",
+      "file": "src/prosim/simulation/montecarlo.py",
+      "line_range": [39, 39],
+      "description": "Incomplete type hint: dict[str, list] should be dict[str, list[Edge]]",
+      "recommendation": "Add proper type annotation"
+    }
+  ],
+  "summary": {"critical": 0, "major": 2, "minor": 4},
+  "verdict": "pass"
+}

@@ -1,0 +1,330 @@
+{
+  "subsystems": [
+    {
+      "node_id": "sys.graph",
+      "name": "Graph Data Model",
+      "responsibility": "Define and manage workflow graph data structures, node/edge schemas, and graph operations",
+      "inputs": [
+        {"name": "node_definitions", "type": "list[dict]", "description": "Raw node data from parser or JSON import"},
+        {"name": "edge_definitions", "type": "list[dict]", "description": "Raw edge data from parser or JSON import"}
+      ],
+      "outputs": [
+        {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Validated, parameterized workflow graph object"}
+      ],
+      "dependencies": [],
+      "implementation_notes": "Pydantic v2 models with strict validation. NetworkX DiGraph as internal representation. All graph mutations go through operations module.",
+      "children": [
+        {
+          "node_id": "sys.graph.models",
+          "name": "Graph Models",
+          "responsibility": "Pydantic models for NodeType enum, NodeParams, Node, Edge, WorkflowGraph",
+          "leaf": true,
+          "file_path": "src/prosim/graph/models.py",
+          "inputs": [],
+          "outputs": [{"name": "model_classes", "type": "module", "description": "NodeType, NodeParams, Node, Edge, WorkflowGraph classes"}]
+        },
+        {
+          "node_id": "sys.graph.operations",
+          "name": "Graph Operations",
+          "responsibility": "Build NetworkX graph from models, validate structure, normalize decision probabilities, compute paths",
+          "leaf": true,
+          "file_path": "src/prosim/graph/operations.py",
+          "inputs": [{"name": "workflow_graph", "type": "WorkflowGraph", "description": "Graph model instance"}],
+          "outputs": [{"name": "nx_graph", "type": "nx.DiGraph", "description": "NetworkX directed graph with node/edge attributes"}]
+        },
+        {
+          "node_id": "sys.graph.serialization",
+          "name": "Graph Serialization",
+          "responsibility": "JSON import/export for workflow graphs, file persistence",
+          "leaf": true,
+          "file_path": "src/prosim/graph/serialization.py",
+          "inputs": [{"name": "workflow_graph", "type": "WorkflowGraph", "description": "Graph to serialize"}],
+          "outputs": [{"name": "json_data", "type": "dict", "description": "JSON-serializable dict"}]
+        }
+      ]
+    },
+    {
+      "node_id": "sys.parser",
+      "name": "Domain Parser",
+      "responsibility": "Transform natural language domain descriptions into structured workflow graphs via Claude API",
+      "inputs": [
+        {"name": "domain_description", "type": "str", "description": "Natural language description of a business process"}
+      ],
+      "outputs": [
+        {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Generated workflow graph with default parameters"}
+      ],
+      "dependencies": ["sys.graph"],
+      "implementation_notes": "Uses Claude API with tool_use for structured extraction. System prompt engineered for BPMN-style workflow generation.",
+      "children": [
+        {
+          "node_id": "sys.parser.client",
+          "name": "Claude API Client",
+          "responsibility": "Manage Claude API interactions with tool_use for structured workflow extraction",
+          "leaf": true,
+          "file_path": "src/prosim/parser/client.py",
+          "inputs": [{"name": "domain_description", "type": "str", "description": "NL process description"}],
+          "outputs": [{"name": "raw_workflow", "type": "dict", "description": "Raw structured output from Claude"}]
+        },
+        {
+          "node_id": "sys.parser.prompts",
+          "name": "Prompt Templates",
+          "responsibility": "System prompts and tool schemas for workflow generation",
+          "leaf": true,
+          "file_path": "src/prosim/parser/prompts.py",
+          "inputs": [],
+          "outputs": [{"name": "prompt_config", "type": "dict", "description": "System prompt, tool definitions, examples"}]
+        },
+        {
+          "node_id": "sys.parser.postprocess",
+          "name": "Post-Processor",
+          "responsibility": "Validate and clean generated graphs, apply default parameters, ensure structural integrity",
+          "leaf": true,
+          "file_path": "src/prosim/parser/postprocess.py",
+          "inputs": [{"name": "raw_workflow", "type": "dict", "description": "Raw output from Claude"}],
+          "outputs": [{"name": "workflow_graph", "type": "WorkflowGraph", "description": "Validated workflow graph"}]
+        }
+      ]
+    },
+    {
+      "node_id": "sys.simulation",
+      "name": "Simulation Engine",
+      "responsibility": "Execute deterministic and Monte Carlo simulations on workflow graphs",
+      "inputs": [
+        {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Parameterized workflow graph"},
+        {"name": "config", "type": "SimulationConfig", "description": "Simulation parameters (num_transactions, seed, mode)"}
+      ],
+      "outputs": [
+        {"name": "results", "type": "SimulationResults", "description": "Full simulation output with metrics, distributions, bottlenecks"}
+      ],
+      "dependencies": ["sys.graph"],
+      "implementation_notes": "Deterministic mode uses DAG path analysis. Monte Carlo uses NumPy vectorized operations for performance. Bottleneck detection uses utilization-based scoring.",
+      "children": [
+        {
+          "node_id": "sys.simulation.results",
+          "name": "Simulation Result Models",
+          "responsibility": "Pydantic models for simulation configuration and results",
+          "leaf": true,
+          "file_path": "src/prosim/simulation/results.py",
+          "inputs": [],
+          "outputs": [{"name": "result_classes", "type": "module", "description": "SimulationConfig, NodeMetrics, SimulationResults classes"}]
+        },
+        {
+          "node_id": "sys.simulation.deterministic",
+          "name": "Deterministic Engine",
+          "responsibility": "Compute expected values via probability-weighted DAG traversal",
+          "leaf": true,
+          "file_path": "src/prosim/simulation/deterministic.py",
+          "inputs": [{"name": "workflow_graph", "type": "WorkflowGraph", "description": "Graph with parameters"}],
+          "outputs": [{"name": "results", "type": "SimulationResults", "description": "Expected time, cost, throughput"}]
+        },
+        {
+          "node_id": "sys.simulation.montecarlo",
+          "name": "Monte Carlo Engine",
+          "responsibility": "Run stochastic simulations with configurable distributions using NumPy vectorization",
+          "leaf": true,
+          "file_path": "src/prosim/simulation/montecarlo.py",
+          "inputs": [
+            {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Graph with parameters"},
+            {"name": "config", "type": "SimulationConfig", "description": "Num transactions, seed, batch size"}
+          ],
+          "outputs": [{"name": "results", "type": "SimulationResults", "description": "Distribution of time, cost, throughput with percentiles"}]
+        },
+        {
+          "node_id": "sys.simulation.bottleneck",
+          "name": "Bottleneck Detector",
+          "responsibility": "Identify nodes with highest friction, queue delay, and utilization",
+          "leaf": true,
+          "file_path": "src/prosim/simulation/bottleneck.py",
+          "inputs": [{"name": "results", "type": "SimulationResults", "description": "Simulation results with per-node metrics"}],
+          "outputs": [{"name": "bottlenecks", "type": "list[BottleneckInfo]", "description": "Ranked list of bottleneck nodes with scores"}]
+        },
+        {
+          "node_id": "sys.simulation.sensitivity",
+          "name": "Sensitivity Analyzer",
+          "responsibility": "Compute marginal impact of each parameter on system-level metrics",
+          "leaf": true,
+          "file_path": "src/prosim/simulation/sensitivity.py",
+          "inputs": [
+            {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Baseline graph"},
+            {"name": "results", "type": "SimulationResults", "description": "Baseline results"}
+          ],
+          "outputs": [{"name": "sensitivity_report", "type": "SensitivityReport", "description": "Per-parameter marginal impacts"}]
+        }
+      ]
+    },
+    {
+      "node_id": "sys.intervention",
+      "name": "Intervention Layer",
+      "responsibility": "Apply modifications to graph parameters and compute deltas, ROI, and leverage rankings",
+      "inputs": [
+        {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Baseline graph"},
+        {"name": "interventions", "type": "list[Intervention]", "description": "List of parameter modifications"},
+        {"name": "baseline_results", "type": "SimulationResults", "description": "Pre-intervention simulation results"}
+      ],
+      "outputs": [
+        {"name": "comparison", "type": "InterventionComparison", "description": "Before/after metrics with deltas and ROI"}
+      ],
+      "dependencies": ["sys.graph", "sys.simulation"],
+      "implementation_notes": "Interventions are applied as percentage modifications to a deep copy of the graph. ROI = (cost_saved - intervention_cost) / intervention_cost.",
+      "children": [
+        {
+          "node_id": "sys.intervention.models",
+          "name": "Intervention Models",
+          "responsibility": "Pydantic models for intervention specifications and comparison results",
+          "leaf": true,
+          "file_path": "src/prosim/intervention/models.py",
+          "inputs": [],
+          "outputs": [{"name": "model_classes", "type": "module", "description": "Intervention, InterventionComparison classes"}]
+        },
+        {
+          "node_id": "sys.intervention.engine",
+          "name": "Intervention Engine",
+          "responsibility": "Apply interventions to graph copy, re-run simulation, compute deltas",
+          "leaf": true,
+          "file_path": "src/prosim/intervention/engine.py",
+          "inputs": [
+            {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Baseline graph"},
+            {"name": "interventions", "type": "list[Intervention]", "description": "Modifications to apply"}
+          ],
+          "outputs": [{"name": "comparison", "type": "InterventionComparison", "description": "Delta metrics and ROI"}]
+        },
+        {
+          "node_id": "sys.intervention.leverage",
+          "name": "Leverage Ranker",
+          "responsibility": "Identify highest marginal leverage nodes across all parameters",
+          "leaf": true,
+          "file_path": "src/prosim/intervention/leverage.py",
+          "inputs": [{"name": "sensitivity_report", "type": "SensitivityReport", "description": "Per-parameter sensitivities"}],
+          "outputs": [{"name": "rankings", "type": "list[LeverageRanking]", "description": "Nodes ranked by improvement potential"}]
+        }
+      ]
+    },
+    {
+      "node_id": "sys.export",
+      "name": "Export & Rendering",
+      "responsibility": "Transform graph and simulation results into Mermaid diagrams, JSON, and summary reports",
+      "inputs": [
+        {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Graph to render"},
+        {"name": "results", "type": "SimulationResults", "description": "Simulation results to include"},
+        {"name": "comparison", "type": "InterventionComparison | None", "description": "Optional intervention comparison"}
+      ],
+      "outputs": [
+        {"name": "mermaid_diagram", "type": "str", "description": "Mermaid-compatible diagram string"},
+        {"name": "json_output", "type": "dict", "description": "Structured JSON export"},
+        {"name": "report", "type": "str", "description": "Formatted summary report"}
+      ],
+      "dependencies": ["sys.graph", "sys.simulation"],
+      "implementation_notes": "Mermaid uses flowchart LR syntax with node-type-specific shapes. Reports use Rich for CLI formatting.",
+      "children": [
+        {
+          "node_id": "sys.export.mermaid",
+          "name": "Mermaid Generator",
+          "responsibility": "Generate BPMN-style Mermaid flowchart diagrams from workflow graphs",
+          "leaf": true,
+          "file_path": "src/prosim/export/mermaid.py",
+          "inputs": [{"name": "workflow_graph", "type": "WorkflowGraph", "description": "Graph to render"}],
+          "outputs": [{"name": "mermaid_str", "type": "str", "description": "Mermaid flowchart string"}]
+        },
+        {
+          "node_id": "sys.export.json_export",
+          "name": "JSON Exporter",
+          "responsibility": "Export graphs and simulation results as structured JSON",
+          "leaf": true,
+          "file_path": "src/prosim/export/json_export.py",
+          "inputs": [
+            {"name": "workflow_graph", "type": "WorkflowGraph", "description": "Graph to export"},
+            {"name": "results", "type": "SimulationResults | None", "description": "Optional results"}
+          ],
+          "outputs": [{"name": "json_data", "type": "dict", "description": "Complete JSON export"}]
+        },
+        {
+          "node_id": "sys.export.reports",
+          "name": "Report Generator",
+          "responsibility": "Generate baseline vs. optimized summary reports with Rich table formatting",
+          "leaf": true,
+          "file_path": "src/prosim/export/reports.py",
+          "inputs": [
+            {"name": "results", "type": "SimulationResults", "description": "Simulation results"},
+            {"name": "comparison", "type": "InterventionComparison | None", "description": "Optional comparison"}
+          ],
+          "outputs": [{"name": "report", "type": "str", "description": "Formatted report string"}]
+        }
+      ]
+    },
+    {
+      "node_id": "sys.cli",
+      "name": "CLI Interface",
+      "responsibility": "Provide Click-based command-line interface for all ProSim operations",
+      "inputs": [
+        {"name": "user_commands", "type": "CLI args", "description": "Command-line arguments and options"}
+      ],
+      "outputs": [
+        {"name": "console_output", "type": "stdout", "description": "Formatted output to terminal"}
+      ],
+      "dependencies": ["sys.parser", "sys.graph", "sys.simulation", "sys.intervention", "sys.export"],
+      "implementation_notes": "Click command group with subcommands. Rich for formatted output. Delegates to subsystem APIs.",
+      "children": [
+        {
+          "node_id": "sys.cli.main",
+          "name": "CLI Entry Point",
+          "responsibility": "Click group definition and shared options (output format, verbosity)",
+          "leaf": true,
+          "file_path": "src/prosim/cli/main.py",
+          "inputs": [],
+          "outputs": [{"name": "cli_group", "type": "click.Group", "description": "Top-level CLI group"}]
+        },
+        {
+          "node_id": "sys.cli.commands",
+          "name": "CLI Commands",
+          "responsibility": "Implementation of generate, simulate, intervene, export, and dashboard commands",
+          "leaf": true,
+          "file_path": "src/prosim/cli/commands.py",
+          "inputs": [{"name": "cli_args", "type": "various", "description": "Per-command arguments"}],
+          "outputs": [{"name": "console_output", "type": "stdout", "description": "Command results"}]
+        }
+      ]
+    },
+    {
+      "node_id": "sys.dashboard",
+      "name": "Web Dashboard",
+      "responsibility": "Provide Streamlit-based interactive UI for graph visualization, simulation, and intervention",
+      "inputs": [
+        {"name": "user_interactions", "type": "Streamlit widgets", "description": "User inputs via web UI"}
+      ],
+      "outputs": [
+        {"name": "rendered_ui", "type": "Streamlit page", "description": "Interactive dashboard"}
+      ],
+      "dependencies": ["sys.parser", "sys.graph", "sys.simulation", "sys.intervention", "sys.export"],
+      "implementation_notes": "Streamlit with session state for graph persistence. Mermaid rendering via streamlit-mermaid or HTML component.",
+      "children": [
+        {
+          "node_id": "sys.dashboard.app",
+          "name": "Dashboard App",
+          "responsibility": "Streamlit application entry point with page layout and session state management",
+          "leaf": true,
+          "file_path": "src/prosim/dashboard/app.py",
+          "inputs": [],
+          "outputs": [{"name": "streamlit_app", "type": "Streamlit", "description": "Running Streamlit application"}]
+        },
+        {
+          "node_id": "sys.dashboard.components",
+          "name": "Dashboard Components",
+          "responsibility": "Reusable Streamlit components: graph viewer, parameter editor, simulation panel, intervention builder",
+          "leaf": true,
+          "file_path": "src/prosim/dashboard/components.py",
+          "inputs": [],
+          "outputs": [{"name": "component_functions", "type": "module", "description": "Callable Streamlit component functions"}]
+        }
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "sys.graph": [],
+    "sys.parser": ["sys.graph"],
+    "sys.simulation": ["sys.graph"],
+    "sys.intervention": ["sys.graph", "sys.simulation"],
+    "sys.export": ["sys.graph", "sys.simulation"],
+    "sys.cli": ["sys.parser", "sys.graph", "sys.simulation", "sys.intervention", "sys.export"],
+    "sys.dashboard": ["sys.parser", "sys.graph", "sys.simulation", "sys.intervention", "sys.export"]
+  }
+}
