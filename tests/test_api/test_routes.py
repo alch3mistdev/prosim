@@ -1,5 +1,7 @@
 """Tests for FastAPI routes."""
 
+from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 
 from prosim.api.server import app
@@ -127,3 +129,69 @@ def test_export_mermaid_with_results(linear_workflow):
     })
     assert resp.status_code == 200
     assert "flowchart LR" in resp.json()["mermaid"]
+
+
+def test_history_endpoint():
+    """GET /api/history returns stub with items and limit."""
+    resp = client.get("/api/history")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "items" in body
+    assert body["items"] == []
+    assert body["limit"] == 30
+
+
+def test_history_endpoint_with_limit():
+    """GET /api/history?limit=10 accepts limit param."""
+    resp = client.get("/api/history?limit=10")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["limit"] == 10
+
+
+def test_workflow_generate_success(linear_workflow):
+    """POST /api/workflow/generate returns 200 with valid mocked output."""
+    raw_valid = {
+        "name": "Generated",
+        "description": "Test",
+        "nodes": [
+            {"id": "start", "name": "Start", "node_type": "start"},
+            {"id": "step", "name": "Step", "node_type": "api"},
+            {"id": "end", "name": "End", "node_type": "end"},
+        ],
+        "edges": [
+            {"source": "start", "target": "step"},
+            {"source": "step", "target": "end"},
+        ],
+    }
+
+    with patch("prosim.parser.client.generate_workflow_raw", return_value=raw_valid):
+        resp = client.post("/api/workflow/generate", json={"description": "test process"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["name"] == "Generated"
+    assert len(body["nodes"]) == 3
+    assert len(body["edges"]) == 2
+
+
+def test_workflow_generate_invalid_output_returns_500():
+    """POST /api/workflow/generate returns 500 when Claude returns invalid structure."""
+    raw_invalid = {
+        "name": "Bad",
+        "nodes": [{"id": "a", "name": "A", "node_type": "api"}],  # no start/end, no edges
+        "edges": [],
+    }
+
+    with patch("prosim.parser.client.generate_workflow_raw", return_value=raw_invalid):
+        resp = client.post("/api/workflow/generate", json={"description": "test"})
+    assert resp.status_code == 500
+    assert "invalid" in resp.json()["detail"].lower()
+
+
+def test_workflow_generate_missing_api_key():
+    """POST /api/workflow/generate returns 500 when ANTHROPIC_API_KEY is missing."""
+    with patch("prosim.parser.client.generate_workflow_raw") as mock:
+        mock.side_effect = EnvironmentError("ANTHROPIC_API_KEY environment variable is required")
+        resp = client.post("/api/workflow/generate", json={"description": "test"})
+    assert resp.status_code == 500
+    assert "ANTHROPIC_API_KEY" in resp.json()["detail"]

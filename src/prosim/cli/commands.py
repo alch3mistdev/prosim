@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -232,5 +233,7 @@ def serve_cmd(host: str, port: int) -> None:
     """Start the FastAPI server for the Next.js dashboard."""
     console.print(f"[bold blue]Starting ProSim API on {host}:{port}[/]")
     console.print("[dim]Frontend: cd frontend && npm run dev[/]")
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        console.print("[bold yellow]Warning: ANTHROPIC_API_KEY not set. Workflow generation will fail.[/]")
     from prosim.api.server import serve
     serve(host=host, port=port)

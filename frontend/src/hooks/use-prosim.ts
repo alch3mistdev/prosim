@@ -59,10 +59,11 @@ export function useProSim() {
         }
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
+        const msg = err instanceof Error ? err.message : "Simulation failed";
         setState((s) => ({
           ...s,
           simulating: false,
-          error: err instanceof Error ? err.message : "Simulation failed",
+          error: msg.startsWith("API error") ? msg : `Workflow loaded but simulation failed: ${msg}`,
         }));
       }
     },

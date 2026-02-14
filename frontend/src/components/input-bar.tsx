@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Sparkles, Upload, Loader2 } from "lucide-react";
+import { Sparkles, Upload, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { WorkflowGraph } from "@/lib/types";
@@ -97,8 +97,23 @@ export function InputBar({ onWorkflowLoaded }: InputBarProps) {
         </div>
       </div>
       {error && (
-        <div className="text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">
-          {error}
+        <div className="flex items-center justify-between gap-3 text-sm text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">
+          <span className="flex-1 min-w-0">{error}</span>
+          {description.trim() ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setError(null);
+                handleGenerate();
+              }}
+              disabled={!description.trim() || loading}
+              className="shrink-0"
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />
+              Retry
+            </Button>
+          ) : null}
         </div>
       )}
     </div>

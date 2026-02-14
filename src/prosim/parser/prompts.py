@@ -31,6 +31,16 @@ For each node, provide realistic default parameters:
 
 For decision nodes, ensure branch probabilities sum to 1.0.
 
+CRITICAL - Graph structure requirements:
+1. Include exactly one "start" node and one "end" node.
+2. Every node MUST appear in at least one edge — either as source or target. No orphaned nodes.
+3. Edges must form a connected flow from start to end. Use source/target IDs that EXACTLY match the node "id" field (same spelling, underscores, no typos).
+4. For each edge, source and target must be valid node IDs from your nodes list.
+
+Example of correct edge format (node IDs must match exactly):
+  nodes: [{"id": "start", ...}, {"id": "validate_invoice", ...}, {"id": "end", ...}]
+  edges: [{"source": "start", "target": "validate_invoice"}, {"source": "validate_invoice", "target": "end"}]
+
 Generate a complete, realistic workflow that captures the essential steps, decision points, and error paths of the described process."""
 
 
@@ -51,7 +61,7 @@ WORKFLOW_TOOL = {
             },
             "nodes": {
                 "type": "array",
-                "description": "List of workflow nodes",
+                "description": "List of workflow nodes. Must include exactly one start and one end node.",
                 "items": {
                     "type": "object",
                     "required": ["id", "name", "node_type"],
@@ -78,13 +88,14 @@ WORKFLOW_TOOL = {
             },
             "edges": {
                 "type": "array",
-                "description": "List of workflow edges",
+                "minItems": 1,
+                "description": "List of workflow edges. Every node must appear in at least one edge (as source or target). Edges must connect all nodes from start to end.",
                 "items": {
                     "type": "object",
                     "required": ["source", "target"],
                     "properties": {
-                        "source": {"type": "string", "description": "Source node ID"},
-                        "target": {"type": "string", "description": "Target node ID"},
+                        "source": {"type": "string", "description": "Source node ID — must exactly match a node id from the nodes array"},
+                        "target": {"type": "string", "description": "Target node ID — must exactly match a node id from the nodes array"},
                         "edge_type": {
                             "type": "string",
                             "enum": ["normal", "conditional", "default", "loop"],

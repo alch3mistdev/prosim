@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
+
+logger = logging.getLogger(__name__)
 
 from prosim.export.mermaid import generate_mermaid
 from prosim.graph.models import WorkflowGraph
@@ -76,6 +79,12 @@ class MermaidRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+@router.get("/history")
+def history(limit: int = 30) -> dict[str, Any]:
+    """Stub for history endpoint — returns empty list."""
+    return {"items": [], "limit": limit}
+
+
 @router.post("/workflow/generate")
 def workflow_generate(req: GenerateRequest) -> dict[str, Any]:
     """Generate a workflow from a natural-language description via Claude API."""
@@ -84,17 +93,27 @@ def workflow_generate(req: GenerateRequest) -> dict[str, Any]:
         from prosim.parser.postprocess import postprocess_raw_workflow
 
         raw = generate_workflow_raw(req.description, model=req.model)
-        wf = postprocess_raw_workflow(raw)
+        wf = postprocess_raw_workflow(raw, strict=True)
         return graph_to_json(wf)
     except EnvironmentError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        detail = str(exc)
+        if "ANTHROPIC_API_KEY" in detail:
+            detail = "Missing ANTHROPIC_API_KEY. Set it in your environment or .env file."
+        logger.warning("Workflow generate failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=detail) from exc
     except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        detail = str(exc)
+        if "tool_use" in detail.lower():
+            detail = "Claude did not return a valid workflow. Please try again."
+        logger.warning("Workflow generate failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=502, detail=detail) from exc
+    except (KeyError, ValueError, TypeError) as exc:
+        detail = f"Workflow generation produced invalid output: {exc}"
+        logger.warning("Workflow generate invalid output: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=detail) from exc
     except Exception as exc:
-        # Anthropic API errors, postprocess KeyError/ValueError, etc.
         detail = str(exc) or "Workflow generation failed"
-        if isinstance(exc, (KeyError, ValueError, TypeError)):
-            detail = f"Workflow generation produced invalid output: {exc}"
+        logger.exception("Workflow generate failed: %s", exc)
         raise HTTPException(status_code=500, detail=detail) from exc
 
 
@@ -111,7 +130,13 @@ def workflow_parse(req: ParseRequest) -> dict[str, Any]:
 @router.post("/simulate")
 def simulate(req: SimulateRequest) -> dict[str, Any]:
     """Run deterministic or Monte Carlo simulation."""
-    wf = graph_from_json(req.workflow)
+    try:
+        wf = graph_from_json(req.workflow)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
+    except (ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     config = SimulationConfig(
         mode=SimulationMode(req.mode),
         num_transactions=req.num_transactions,
@@ -119,10 +144,17 @@ def simulate(req: SimulateRequest) -> dict[str, Any]:
         seed=req.seed,
     )
 
-    if config.mode == SimulationMode.MONTE_CARLO:
-        results = run_monte_carlo(wf, config)
-    else:
-        results = run_deterministic(wf, config)
+    try:
+        if config.mode == SimulationMode.MONTE_CARLO:
+            results = run_monte_carlo(wf, config)
+        else:
+            results = run_deterministic(wf, config)
+    except Exception as exc:
+        logger.exception("Simulation failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Simulation failed: {exc}",
+        ) from exc
 
     results.bottlenecks = detect_bottlenecks(results)
     return results.model_dump(mode="json")
@@ -166,7 +198,21 @@ def leverage(req: LeverageRequest) -> list[dict[str, Any]]:
 @router.post("/export/mermaid")
 def export_mermaid(req: MermaidRequest) -> dict[str, str]:
     """Generate Mermaid diagram code."""
-    wf = graph_from_json(req.workflow)
-    results = SimulationResults(**req.results) if req.results else None
-    code = generate_mermaid(wf, results=results, show_metrics=req.show_metrics)
+    try:
+        wf = graph_from_json(req.workflow)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
+    except (ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    try:
+        results = SimulationResults(**req.results) if req.results else None
+        code = generate_mermaid(wf, results=results, show_metrics=req.show_metrics)
+    except Exception as exc:
+        logger.exception("Mermaid export failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Export failed: {exc}",
+        ) from exc
+
     return {"mermaid": code}

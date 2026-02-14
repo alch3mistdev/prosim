@@ -132,6 +132,7 @@ The Next.js dashboard is a single-page reactive app organized into 5 zones:
 
 | Method | Path | Description |
 |--------|------|-------------|
+| GET | `/api/history` | Stub (returns empty list). Accepts `?limit=N`. |
 | POST | `/api/workflow/generate` | Generate workflow from description (Claude API) |
 | POST | `/api/workflow/parse` | Validate and normalize uploaded JSON |
 | POST | `/api/simulate` | Run deterministic or Monte Carlo simulation |
@@ -157,3 +158,19 @@ cd frontend && npx next build
 | `ANTHROPIC_API_KEY` | — | Required for workflow generation |
 | `PROSIM_CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Comma-separated CORS origins |
 | `NEXT_PUBLIC_API_BASE` | `/api` | API base URL (frontend) |
+
+## Troubleshooting
+
+### 500 error when generating a workflow
+
+**Missing API key:** Ensure `ANTHROPIC_API_KEY` is set in your environment or `.env` file. Run `prosim serve` from the project root; it will warn if the key is missing.
+
+**Invalid Claude output:** If the workflow has orphaned nodes or disconnected graph, the API returns 500 with a message like "Workflow generation produced invalid output". Try again with a clearer process description, or upload a valid workflow JSON instead.
+
+### 404 on /api/history
+
+The `/api/history` endpoint is a stub that returns an empty list. Some browser extensions or dev tools may poll it; the 404 is resolved by the implemented stub.
+
+### Orphaned nodes / graph not weakly connected
+
+These warnings appear when Claude returns a workflow with nodes but missing or incorrect edges. The parser attempts to repair (e.g. infer linear chain when edges are empty, fix hyphen/underscore mismatches). If repair fails, generation returns 500. Use the Retry button in the UI or try a different description.
