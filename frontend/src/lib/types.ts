@@ -53,6 +53,33 @@ export interface WorkflowGraph {
   edges: WorkflowEdge[];
 }
 
+export type ScenarioId = "baseline" | "proposal";
+
+export interface ScenarioSimulationConfig {
+  volume_per_hour: number;
+  num_transactions: number;
+}
+
+export type ScenarioStatus = "idle" | "simulating" | "ready" | "error";
+
+export interface ScenarioState {
+  id: ScenarioId;
+  workflow: WorkflowGraph | null;
+  results: SimulationResults | null;
+  status: ScenarioStatus;
+  error: string | null;
+  locked: boolean;
+  updatedAt: string | null;
+}
+
+export interface ProposalControls {
+  targetId: string;
+  timeReductionPct: number;
+  costReductionPct: number;
+  errorReductionPct: number;
+  implementationCost: number;
+}
+
 export interface NodeMetrics {
   node_id: string;
   node_name: string;
@@ -129,6 +156,13 @@ export interface InterventionComparison {
   payback_months: number | null;
 }
 
+export interface ScenarioComparisonViewModel {
+  baseline: SimulationResults | null;
+  proposal: InterventionComparison | null;
+  hasProposal: boolean;
+  summary: string;
+}
+
 export interface Intervention {
   node_id: string;
   time_reduction_pct: number;
@@ -165,4 +199,11 @@ export interface LeverageRanking {
   time_impact_pct: number;
   cost_impact_pct: number;
   recommendation: string;
+}
+
+export interface SelectedNodeContext {
+  node: WorkflowNode | null;
+  metrics: NodeMetrics | null;
+  bottleneck: BottleneckInfo | null;
+  recommendations: string[];
 }

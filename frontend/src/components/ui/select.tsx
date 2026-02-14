@@ -15,7 +15,8 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text",
+      "flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text",
+      "[&>span]:min-w-0 [&>span]:flex-1 [&>span]:truncate",
       "focus:outline-none focus:ring-2 focus:ring-accent",
       "disabled:cursor-not-allowed disabled:opacity-50",
       className,
@@ -62,14 +63,14 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer select-none items-center rounded-md py-1.5 px-2 text-sm text-text outline-none",
+      "relative flex w-full min-w-0 cursor-pointer select-none items-center rounded-md py-1.5 px-2 text-sm text-text outline-none",
       "focus:bg-surface-hover focus:text-text",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className,
     )}
     {...props}
   >
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    <SelectPrimitive.ItemText className="truncate">{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;

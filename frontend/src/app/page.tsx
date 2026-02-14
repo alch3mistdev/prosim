@@ -1,13 +1,21 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { InputBar } from "@/components/input-bar";
 import { WorkflowGraphView } from "@/components/workflow-graph";
 import { MetricsCards } from "@/components/metrics-cards";
 import { NodeTable } from "@/components/node-table";
 import { WhatIfPanel } from "@/components/whatif-panel";
 import { AdvancedPanel } from "@/components/advanced-panel";
+import { ScenarioComparisonBoard } from "@/components/scenario-comparison-board";
+import { NodeInsightPanel } from "@/components/node-insight-panel";
+import { DecisionSummaryStrip } from "@/components/decision-summary-strip";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useProSim } from "@/hooks/use-prosim";
+import type { LeverageRanking } from "@/lib/types";
+
+const UI_V2_ENABLED = process.env.NEXT_PUBLIC_UI_V2 !== "0";
 
 export default function Home() {
   const {
@@ -21,73 +29,266 @@ export default function Home() {
     updateWorkflow,
     setVolumePerHour,
     setNumTransactions,
+
+    baseline,
+    proposal,
+    comparison,
+    proposalControls,
+    selectedNodeId,
+    selectedNodeContext,
+    setSelectedNodeId,
+    setProposalTarget,
+    setProposalControls,
+    applyProposalIntervention,
+    simulateProposalWorkflow,
+    resetProposal,
   } = useProSim();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [detailedLabels, setDetailedLabels] = useState(false);
+  const [proposalJumpSignal, setProposalJumpSignal] = useState(0);
+  const [proposalNotice, setProposalNotice] = useState<string | null>(null);
+
+  const steps = useMemo(
+    () => [
+      {
+        key: "build",
+        label: "Step 1 | Build / Load",
+        done: Boolean(workflow),
+      },
+      {
+        key: "baseline",
+        label: "Step 2 | Calibrate Baseline",
+        done: Boolean(baseline.locked && baseline.results),
+      },
+      {
+        key: "proposal",
+        label: "Step 3 | Compare Proposal",
+        done: Boolean(comparison),
+      },
+    ],
+    [workflow, baseline.locked, baseline.results, comparison],
+  );
+
+  function optimizeBottleneck(nodeId: string) {
+    const nodeName = workflow?.nodes.find((n) => n.id === nodeId)?.name ?? nodeId;
+    setSelectedNodeId(nodeId);
+    setProposalTarget(nodeId);
+    setProposalControls({
+      targetId: nodeId,
+      timeReductionPct: 20,
+      costReductionPct: 10,
+      errorReductionPct: 5,
+    });
+    setProposalNotice(`Loaded optimization preset for ${nodeName}. Review Proposal Builder and click Compare Proposal.`);
+    setProposalJumpSignal((s) => s + 1);
+  }
+
+  function applyNodePreset(patch: Partial<typeof proposalControls>) {
+    if (patch.targetId) {
+      setSelectedNodeId(patch.targetId);
+      setProposalTarget(patch.targetId);
+    }
+    setProposalControls(patch);
+  }
+
+  function applyLeverageRecommendation(ranking: LeverageRanking) {
+    const patch: Partial<typeof proposalControls> = { targetId: ranking.node_id };
+
+    if (ranking.parameter.includes("time") || ranking.parameter.includes("queue")) {
+      patch.timeReductionPct = 25;
+      patch.costReductionPct = 10;
+      patch.errorReductionPct = 10;
+    } else if (ranking.parameter.includes("cost")) {
+      patch.timeReductionPct = 10;
+      patch.costReductionPct = 25;
+      patch.errorReductionPct = 5;
+    } else {
+      patch.timeReductionPct = 15;
+      patch.costReductionPct = 10;
+      patch.errorReductionPct = 20;
+    }
+
+    applyNodePreset(patch);
+  }
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b border-border bg-surface/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-lg">
+        <div className="mx-auto flex max-w-[1700px] flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold text-text tracking-tight">ProSim</h1>
-            <span className="text-xs text-text-dim hidden sm:inline">Workflow Simulation</span>
+            <h1 className="text-lg font-bold tracking-tight text-text">ProSim</h1>
+            <span className="hidden text-xs text-text-dim md:inline">Decision Cockpit</span>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {steps.map((step) => (
+              <span
+                key={step.key}
+                className={`rounded-full border px-2.5 py-1 ${
+                  step.done
+                    ? "border-success/40 bg-success/15 text-success"
+                    : "border-border bg-surface/40 text-text-dim"
+                }`}
+              >
+                {step.label}
+              </span>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <label className="text-xs text-text-muted whitespace-nowrap">Vol/hr</label>
+              <label className="whitespace-nowrap text-xs text-text-muted">Vol/hr</label>
               <Input
                 type="number"
                 value={volumePerHour}
                 onChange={(e) => setVolumePerHour(parseFloat(e.target.value) || 100)}
-                className="w-24 h-8 text-xs"
+                className="h-8 w-24 text-xs"
                 min={0.1}
                 step={10}
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-text-muted whitespace-nowrap">Txns</label>
+              <label className="whitespace-nowrap text-xs text-text-muted">Txns</label>
               <Input
                 type="number"
                 value={numTransactions}
-                onChange={(e) => setNumTransactions(parseInt(e.target.value) || 10_000)}
-                className="w-28 h-8 text-xs"
+                onChange={(e) => setNumTransactions(parseInt(e.target.value, 10) || 10_000)}
+                className="h-8 w-28 text-xs"
                 min={100}
                 step={1000}
               />
             </div>
-            {simulating && (
-              <div className="flex items-center gap-1.5 text-xs text-accent">
-                <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-                Simulating
+            {simulating ? (
+              <div className="flex items-center gap-1.5 text-xs text-accent-bright">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+                Baseline simulating
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="max-w-[1600px] mx-auto px-4 py-6 space-y-6">
-        {/* Zone 1: Input Bar */}
-        <section>
-          <InputBar onWorkflowLoaded={setWorkflow} />
-        </section>
+      <main className="mx-auto max-w-[1700px] space-y-5 px-4 py-5">
+        <InputBar onWorkflowLoaded={setWorkflow} />
 
-        {error && (
-          <div className="text-sm text-error bg-error/10 border border-error/20 rounded-lg px-4 py-3">
+        {UI_V2_ENABLED ? (
+          <DecisionSummaryStrip
+            baseline={baseline}
+            proposal={proposal}
+            volumePerHour={volumePerHour}
+            numTransactions={numTransactions}
+          />
+        ) : null}
+
+        {error ? (
+          <div className="rounded-lg border border-error/20 bg-error/10 px-4 py-3 text-sm text-error">
             {error}
           </div>
-        )}
+        ) : null}
 
         {!workflow ? (
-          <div className="text-center py-20">
-            <p className="text-text-dim text-lg">
-              Describe a business process above and click <strong className="text-text">Generate</strong>, or upload a workflow JSON file.
+          <div className="rounded-xl border border-border bg-surface/30 py-24 text-center">
+            <p className="text-lg text-text-dim">
+              Describe a process above and generate a baseline, or upload a workflow JSON.
             </p>
           </div>
+        ) : UI_V2_ENABLED ? (
+          <>
+            <section className="relative z-0 grid grid-cols-1 gap-5 overflow-hidden xl:grid-cols-7">
+              <div className="min-w-0 space-y-3 xl:col-span-4">
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface/40 p-2.5">
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search nodes by name or id"
+                    className="h-8 max-w-sm"
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setDetailedLabels((v) => !v)}
+                  >
+                    {detailedLabels ? "Compact labels" : "Detailed labels"}
+                  </Button>
+                </div>
+
+                <WorkflowGraphView
+                  workflow={workflow}
+                  results={results}
+                  loading={simulating}
+                  selectedNodeId={selectedNodeId}
+                  searchQuery={searchQuery}
+                  detailedLabels={detailedLabels}
+                  onSelectNode={setSelectedNodeId}
+                />
+              </div>
+
+              <div className="min-w-0 space-y-3 xl:col-span-3">
+                <MetricsCards
+                  baselineResults={baseline.results}
+                  proposalResults={proposal.results}
+                  comparison={comparison}
+                  onOptimizeBottleneck={optimizeBottleneck}
+                />
+                <NodeInsightPanel
+                  context={selectedNodeContext}
+                  onApplyPreset={applyNodePreset}
+                />
+              </div>
+            </section>
+
+            {results ? (
+              <section className="relative z-10 mt-2 space-y-4">
+                <ScenarioComparisonBoard
+                  comparison={comparison}
+                  proposalStatus={proposal.status}
+                  proposalError={proposal.error}
+                />
+                <WhatIfPanel
+                  workflow={workflow}
+                  baselineResults={results}
+                  proposalControls={proposalControls}
+                  comparison={comparison}
+                  loading={proposal.status === "simulating"}
+                  error={proposal.error}
+                  onTargetChange={setProposalTarget}
+                  onControlsChange={setProposalControls}
+                  onApply={() => void applyProposalIntervention()}
+                  onReset={resetProposal}
+                  onRunFullSimulation={() => void simulateProposalWorkflow()}
+                  focusSignal={proposalJumpSignal}
+                  notice={proposalNotice}
+                  onClearNotice={() => setProposalNotice(null)}
+                />
+              </section>
+            ) : null}
+
+            <section>
+              <NodeTable
+                workflow={workflow}
+                onParamsChanged={updateWorkflow}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={setSelectedNodeId}
+                searchQuery={searchQuery}
+              />
+            </section>
+
+            {results ? (
+              <section>
+                <AdvancedPanel
+                  workflow={workflow}
+                  results={results}
+                  volumePerHour={volumePerHour}
+                  numTransactions={numTransactions}
+                  onApplyRecommendation={applyLeverageRecommendation}
+                />
+              </section>
+            ) : null}
+          </>
         ) : (
           <>
-            {/* Zone 2: Diagram + Metrics */}
-            <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <section className="grid grid-cols-1 gap-6 lg:grid-cols-5">
               <div className="lg:col-span-3">
                 <WorkflowGraphView workflow={workflow} results={results} loading={simulating} />
               </div>
@@ -96,25 +297,32 @@ export default function Home() {
               </div>
             </section>
 
-            {/* Zone 3: Node Table */}
             <section>
               <NodeTable workflow={workflow} onParamsChanged={updateWorkflow} />
             </section>
 
-            {/* Zone 4: What-If */}
-            {results && (
+            {results ? (
               <section>
                 <WhatIfPanel
                   workflow={workflow}
-                  results={results}
-                  volumePerHour={volumePerHour}
-                  numTransactions={numTransactions}
+                  baselineResults={results}
+                  proposalControls={proposalControls}
+                  comparison={comparison}
+                  loading={proposal.status === "simulating"}
+                  error={proposal.error}
+                  onTargetChange={setProposalTarget}
+                  onControlsChange={setProposalControls}
+                  onApply={() => void applyProposalIntervention()}
+                  onReset={resetProposal}
+                  onRunFullSimulation={() => void simulateProposalWorkflow()}
+                  focusSignal={proposalJumpSignal}
+                  notice={proposalNotice}
+                  onClearNotice={() => setProposalNotice(null)}
                 />
               </section>
-            )}
+            ) : null}
 
-            {/* Zone 5: Advanced */}
-            {results && (
+            {results ? (
               <section>
                 <AdvancedPanel
                   workflow={workflow}
@@ -123,7 +331,7 @@ export default function Home() {
                   numTransactions={numTransactions}
                 />
               </section>
-            )}
+            ) : null}
           </>
         )}
       </main>

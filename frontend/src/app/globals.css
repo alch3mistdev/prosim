@@ -1,57 +1,66 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0a0a0f;
-  --color-surface: #12121a;
-  --color-surface-hover: #1a1a26;
-  --color-border: #2a2a3a;
-  --color-border-bright: #3a3a5a;
-  --color-text: #e4e4ef;
-  --color-text-muted: #8888a0;
-  --color-text-dim: #555570;
-  --color-accent: #6366f1;
-  --color-accent-bright: #818cf8;
-  --color-success: #22c55e;
+  --color-background: #060b14;
+  --color-surface: #111827;
+  --color-surface-hover: #1b2538;
+  --color-border: #27344b;
+  --color-border-bright: #3a4d6d;
+  --color-text: #e8eef8;
+  --color-text-muted: #9eb0cb;
+  --color-text-dim: #7283a1;
+  --color-accent: #3b82f6;
+  --color-accent-bright: #6ea8ff;
+  --color-success: #34d399;
   --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #3b82f6;
+  --color-error: #f87171;
+  --color-info: #38bdf8;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
 }
 
 body {
-  background-color: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-sans);
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(circle at 12% 10%, rgba(56, 189, 248, 0.14) 0, rgba(56, 189, 248, 0) 32%),
+    radial-gradient(circle at 85% 2%, rgba(59, 130, 246, 0.12) 0, rgba(59, 130, 246, 0) 26%),
+    linear-gradient(180deg, #060b14 0%, #070f1b 45%, #050a12 100%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Mermaid diagram overrides for dark theme */
 .mermaid-container svg {
   max-width: 100%;
   height: auto;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--color-surface);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-border-bright);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-dim);
+  width: 7px;
+  height: 7px;
 }
 
-/* Input/table number cells */
+::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.65);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-bright);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #536c95;
+}
+
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   opacity: 1;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.35);
+  color: #f8fbff;
 }
