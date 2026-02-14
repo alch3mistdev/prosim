@@ -6,6 +6,8 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InlineHelp } from "@/components/inline-help";
+import { HelpTip } from "@/components/help-tip";
 import { Loader2, Sparkles, RotateCcw } from "lucide-react";
 import type {
   InterventionComparison,
@@ -106,6 +108,11 @@ export function WhatIfPanel({
               {comparison ? "Proposal configured" : "Awaiting proposal"}
             </Badge>
           </div>
+          <InlineHelp title="Proposal Builder Help">
+            Choose a target node, apply reduction sliders, then click Compare Proposal.
+            This estimates macro impact against baseline. Use Run full proposal sim if you
+            want deterministic simulation on the modified proposal workflow.
+          </InlineHelp>
         </CardHeader>
         <CardContent className="space-y-4">
           {notice ? (
@@ -169,21 +176,25 @@ export function WhatIfPanel({
             <div className="min-w-0 space-y-4 rounded-lg border border-border bg-background/60 p-3">
               <SliderRow
                 label="Time reduction"
+                helpText="Percent reduction applied to processing and queue time at the selected node."
                 value={proposalControls.timeReductionPct}
                 onChange={(value) => onControlsChange({ timeReductionPct: value })}
               />
               <SliderRow
                 label="Cost reduction"
+                helpText="Percent reduction applied to per-transaction node cost."
                 value={proposalControls.costReductionPct}
                 onChange={(value) => onControlsChange({ costReductionPct: value })}
               />
               <SliderRow
                 label="Error reduction"
+                helpText="Percent reduction applied to node-level error probability."
                 value={proposalControls.errorReductionPct}
                 onChange={(value) => onControlsChange({ errorReductionPct: value })}
               />
               <SliderRow
                 label="Implementation cost"
+                helpText="Estimated one-time investment used for ROI and payback calculations."
                 value={proposalControls.implementationCost}
                 onChange={(value) => onControlsChange({ implementationCost: value })}
                 max={500_000}
@@ -228,6 +239,7 @@ export function WhatIfPanel({
 
 function SliderRow({
   label,
+  helpText,
   value,
   onChange,
   min = 0,
@@ -236,6 +248,7 @@ function SliderRow({
   asCurrency = false,
 }: {
   label: string;
+  helpText?: string;
   value: number;
   onChange: (value: number) => void;
   min?: number;
@@ -246,7 +259,10 @@ function SliderRow({
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-        <span className="text-text-muted">{label}</span>
+        <span className="inline-flex items-center gap-1 text-text-muted">
+          <span>{label}</span>
+          {helpText ? <HelpTip text={helpText} /> : null}
+        </span>
         <Badge variant={value > 0 ? "default" : "muted"} className="font-mono">
           {asCurrency ? `$${Math.round(value).toLocaleString()}` : `${value}%`}
         </Badge>

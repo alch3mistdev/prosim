@@ -5,6 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { InlineHelp } from "@/components/inline-help";
+import { HelpTip } from "@/components/help-tip";
 import { ChevronDown, ChevronRight, Loader2, Download, Zap, BarChart3, WandSparkles } from "lucide-react";
 import type { WorkflowGraph, SimulationResults, LeverageRanking } from "@/lib/types";
 import { simulate, runSensitivity, rankLeverage, exportMermaid } from "@/lib/api";
@@ -55,6 +57,11 @@ export function AdvancedPanel({
     <Card>
       <CardHeader className="pb-2">
         <CardTitle>Risk & Leverage</CardTitle>
+        <InlineHelp title="Advanced Analysis Help">
+          Monte Carlo quantifies uncertainty using random sampling. Sensitivity/Leverage
+          finds which node parameters most influence outcomes. Use these after baseline/proposal
+          to validate robustness and prioritize interventions.
+        </InlineHelp>
       </CardHeader>
       <CardContent className="space-y-3">
         <MonteCarloSection workflow={workflow} volumePerHour={volumePerHour} />
@@ -104,9 +111,16 @@ function MonteCarloSection({
   return (
     <Collapsible title="Monte Carlo Risk Envelope" icon={BarChart3}>
       <div className="space-y-4">
+        <p className="text-xs text-text-dim">
+          Monte Carlo runs many randomized transactions. Use it when you need percentile
+          risk (P95/P99), not just average outcomes.
+        </p>
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <label className="mb-1 block text-xs text-text-muted">Transactions</label>
+            <label className="mb-1 flex items-center gap-1 text-xs text-text-muted">
+              <span>Transactions</span>
+              <HelpTip text="Number of random transactions sampled in Monte Carlo. Higher values produce more stable percentiles." />
+            </label>
             <Input
               type="number"
               value={txCount}
@@ -117,7 +131,10 @@ function MonteCarloSection({
             />
           </div>
           <div className="w-24">
-            <label className="mb-1 block text-xs text-text-muted">Seed</label>
+            <label className="mb-1 flex items-center gap-1 text-xs text-text-muted">
+              <span>Seed</span>
+              <HelpTip text="Random seed for reproducibility. Same seed + same workflow => same Monte Carlo result." />
+            </label>
             <Input
               type="number"
               value={seed}
@@ -184,6 +201,10 @@ function SensitivitySection({
   return (
     <Collapsible title="Leverage Ranking" icon={Zap}>
       <div className="space-y-3">
+        <p className="text-xs text-text-dim">
+          Sensitivity perturbs parameters and measures impact. Leverage ranking sorts
+          interventions by expected payoff.
+        </p>
         <Button onClick={() => void run()} disabled={loading} variant="secondary" className="w-full">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run Sensitivity Analysis"}
         </Button>

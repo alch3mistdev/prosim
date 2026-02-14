@@ -10,6 +10,9 @@ import { AdvancedPanel } from "@/components/advanced-panel";
 import { ScenarioComparisonBoard } from "@/components/scenario-comparison-board";
 import { NodeInsightPanel } from "@/components/node-insight-panel";
 import { DecisionSummaryStrip } from "@/components/decision-summary-strip";
+import { HelpCenter } from "@/components/help-center";
+import { InlineHelp } from "@/components/inline-help";
+import { HelpTip } from "@/components/help-tip";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useProSim } from "@/hooks/use-prosim";
@@ -138,7 +141,10 @@ export default function Home() {
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <label className="whitespace-nowrap text-xs text-text-muted">Vol/hr</label>
+              <label className="flex items-center gap-1 whitespace-nowrap text-xs text-text-muted">
+                Vol/hr
+                <HelpTip text="Input demand rate. Higher volume increases pressure on queueing and throughput constraints." />
+              </label>
               <Input
                 type="number"
                 value={volumePerHour}
@@ -149,7 +155,10 @@ export default function Home() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="whitespace-nowrap text-xs text-text-muted">Txns</label>
+              <label className="flex items-center gap-1 whitespace-nowrap text-xs text-text-muted">
+                Txns
+                <HelpTip text="Number of transactions simulated per run. Larger values improve stability but can be slower." />
+              </label>
               <Input
                 type="number"
                 value={numTransactions}
@@ -165,6 +174,7 @@ export default function Home() {
                 Baseline simulating
               </div>
             ) : null}
+            <HelpCenter />
           </div>
         </div>
       </header>
@@ -211,6 +221,13 @@ export default function Home() {
                   >
                     {detailedLabels ? "Compact labels" : "Detailed labels"}
                   </Button>
+                  <div className="basis-full">
+                    <InlineHelp title="Workflow Graph Help">
+                      Click any node to inspect details and quick actions on the right panel.
+                      Use search to focus specific nodes. Toggle detailed labels to show
+                      time/cost/utilization in the graph cards.
+                    </InlineHelp>
+                  </div>
                 </div>
 
                 <WorkflowGraphView

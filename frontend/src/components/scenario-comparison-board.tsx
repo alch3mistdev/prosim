@@ -2,6 +2,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { InlineHelp } from "@/components/inline-help";
 import type { InterventionComparison } from "@/lib/types";
 import { formatCost, formatPct } from "@/lib/utils";
 
@@ -25,6 +26,10 @@ export function ScenarioComparisonBoard({
             {proposalStatus === "ready" ? "Compared" : proposalStatus}
           </Badge>
         </div>
+        <InlineHelp title="Comparison Help">
+          This panel summarizes projected before/after impact after Compare Proposal runs.
+          Use it for stakeholder readout: time, cost, throughput, error, annual value, ROI.
+        </InlineHelp>
       </CardHeader>
       <CardContent className="space-y-3">
         {proposalError ? (

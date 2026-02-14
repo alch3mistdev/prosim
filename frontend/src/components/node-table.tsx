@@ -4,6 +4,8 @@ import { useState, useCallback, memo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InlineHelp } from "@/components/inline-help";
+import { HelpTip } from "@/components/help-tip";
 import type { WorkflowGraph } from "@/lib/types";
 
 interface NodeTableProps {
@@ -22,18 +24,38 @@ interface FieldDef {
   pct?: boolean;
   integer?: boolean;
   advanced?: boolean;
+  help?: string;
 }
 
 const EDITABLE_FIELDS: FieldDef[] = [
-  { key: "exec_time_mean", label: "Time (s)", format: (v: number) => v.toFixed(2), step: 0.1 },
-  { key: "queue_delay_mean", label: "Queue (s)", format: (v: number) => v.toFixed(2), step: 0.1 },
-  { key: "cost_per_transaction", label: "Cost ($)", format: (v: number) => v.toFixed(4), step: 0.001 },
+  {
+    key: "exec_time_mean",
+    label: "Time (s)",
+    format: (v: number) => v.toFixed(2),
+    step: 0.1,
+    help: "Average processing time at this node, excluding queue wait.",
+  },
+  {
+    key: "queue_delay_mean",
+    label: "Queue (s)",
+    format: (v: number) => v.toFixed(2),
+    step: 0.1,
+    help: "Average waiting time before work starts at this node.",
+  },
+  {
+    key: "cost_per_transaction",
+    label: "Cost ($)",
+    format: (v: number) => v.toFixed(4),
+    step: 0.001,
+    help: "Average direct cost incurred each time a transaction passes this node.",
+  },
   {
     key: "error_rate",
     label: "Error %",
     format: (v: number) => (v * 100).toFixed(2),
     step: 0.01,
     pct: true,
+    help: "Probability that processing fails at this node.",
   },
   {
     key: "parallelization_factor",
@@ -41,6 +63,7 @@ const EDITABLE_FIELDS: FieldDef[] = [
     format: (v: number) => v.toString(),
     step: 1,
     integer: true,
+    help: "Parallel capacity multiplier. Higher values reduce effective cycle time.",
   },
   {
     key: "max_retries",
@@ -49,6 +72,7 @@ const EDITABLE_FIELDS: FieldDef[] = [
     step: 1,
     integer: true,
     advanced: true,
+    help: "Maximum retry attempts after a failure at this node.",
   },
   {
     key: "retry_delay",
@@ -56,6 +80,7 @@ const EDITABLE_FIELDS: FieldDef[] = [
     format: (v: number) => v.toFixed(2),
     step: 0.1,
     advanced: true,
+    help: "Wait time before each retry attempt.",
   },
 ];
 
@@ -179,6 +204,13 @@ export function NodeTable({
           <div>
             <CardTitle>Node Parameters</CardTitle>
             <p className="mt-1 text-xs text-text-dim">Select a node in graph or table, then tune assumptions.</p>
+            <div className="mt-2">
+              <InlineHelp title="Parameter Help">
+                Time = processing time. Queue = waiting time. Cost = per-transaction cost.
+                Error % = failure probability. Workers = parallel capacity multiplier.
+                Advanced fields include retry count and retry delay behavior.
+              </InlineHelp>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -207,7 +239,10 @@ export function NodeTable({
                   key={f.key}
                   className="px-2 py-2 text-right text-xs font-medium uppercase tracking-wider text-text-muted"
                 >
-                  {f.label}
+                  <span className="inline-flex items-center gap-1">
+                    <span>{f.label}</span>
+                    {f.help ? <HelpTip text={f.help} /> : null}
+                  </span>
                 </th>
               ))}
             </tr>

@@ -8,7 +8,24 @@ import type {
   WorkflowGraph,
 } from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
+const DEV_DIRECT_BASE =
+  process.env.NEXT_PUBLIC_DEV_API_BASE ?? "http://127.0.0.1:8000/api";
+const BASE =
+  process.env.NEXT_PUBLIC_API_BASE ??
+  (process.env.NODE_ENV === "development" ? DEV_DIRECT_BASE : "/api");
+
+function withProxyTimeoutHint(detail: string): string {
+  const normalized = detail.toLowerCase();
+  const looksLikeProxyReset =
+    normalized.includes("socket hang up") ||
+    normalized.includes("econnreset") ||
+    normalized.includes("network error");
+
+  if (looksLikeProxyReset && BASE.startsWith("/api")) {
+    return `${detail}\nHint: local workflow generation can exceed Next.js proxy timeouts. Set NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000/api and restart the frontend.`;
+  }
+  return detail;
+}
 
 async function post<T>(
   path: string,
@@ -30,7 +47,7 @@ async function post<T>(
     } catch {
       /* use raw text */
     }
-    throw new Error(`API error ${res.status}: ${detail}`);
+    throw new Error(`API error ${res.status}: ${withProxyTimeoutHint(detail)}`);
   }
   return res.json() as Promise<T>;
 }

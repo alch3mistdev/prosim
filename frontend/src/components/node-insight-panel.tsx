@@ -3,6 +3,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InlineHelp } from "@/components/inline-help";
 import type { ProposalControls, SelectedNodeContext } from "@/lib/types";
 import { formatCost, formatTime } from "@/lib/utils";
 
@@ -34,6 +35,10 @@ export function NodeInsightPanel({ context, onApplyPreset }: NodeInsightPanelPro
           <CardTitle className="truncate">{node.name}</CardTitle>
           <Badge variant={bottleneck ? "warning" : "muted"}>{node.node_type}</Badge>
         </div>
+        <InlineHelp title="Node Insight Help">
+          This panel shows per-node baseline metrics and suggested actions. Quick actions
+          prefill Proposal Builder sliders for the selected node.
+        </InlineHelp>
       </CardHeader>
       <CardContent className="space-y-3">
         {metrics ? (

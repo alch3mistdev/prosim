@@ -4,6 +4,7 @@ import { Clock, DollarSign, Gauge, CheckCircle, AlertTriangle, ArrowRight } from
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InlineHelp } from "@/components/inline-help";
 import type { InterventionComparison, SimulationResults } from "@/lib/types";
 import {
   formatCost,
@@ -64,7 +65,14 @@ export function MetricsCards({
     return (
       <Card className="h-full">
         <CardHeader className="pb-2">
-          <CardTitle>KPI Storyboard</CardTitle>
+          <div className="space-y-2">
+            <CardTitle>KPI Storyboard</CardTitle>
+            <InlineHelp title="KPI Help">
+              Avg Time and Avg Cost are end-to-end per-transaction estimates.
+              Throughput is transactions/hour. Completion is successful end-state
+              transactions. Deltas show change versus baseline when a proposal exists.
+            </InlineHelp>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex h-52 items-center justify-center text-sm text-text-dim">
@@ -93,7 +101,13 @@ export function MetricsCards({
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
-        <CardTitle>KPI Storyboard</CardTitle>
+        <div className="space-y-2">
+          <CardTitle>KPI Storyboard</CardTitle>
+          <InlineHelp title="KPI Help">
+            Bottlenecks are nodes driving cycle time. Use the Optimize action to preload
+            a proposal preset for that node, then run Compare Proposal.
+          </InlineHelp>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

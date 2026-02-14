@@ -5,6 +5,7 @@ import { Sparkles, Upload, Loader2, RotateCcw, CheckCircle2 } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { InlineHelp } from "@/components/inline-help";
 import type { WorkflowGraph } from "@/lib/types";
 import { generateWorkflow, parseWorkflow } from "@/lib/api";
 
@@ -26,7 +27,7 @@ const GENERATION_STAGES = [
 
 export function InputBar({ onWorkflowLoaded }: InputBarProps) {
   const [description, setDescription] = useState("");
-  const [maxNodes, setMaxNodes] = useState<number | "">(25);
+  const [maxNodes, setMaxNodes] = useState<number | "">(7);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
@@ -123,6 +124,11 @@ export function InputBar({ onWorkflowLoaded }: InputBarProps) {
             <p className="text-xs text-text-dim">
               Generation typically takes 30-60 seconds. Use <span className="font-mono">Cmd/Ctrl + Enter</span> to run.
             </p>
+            <InlineHelp title="Input Help">
+              Describe the process as ordered steps and decision points, for example:
+              intake - validate - decision - approval - completion. Upload JSON if you
+              already have a workflow model. Max nodes limits generated complexity.
+            </InlineHelp>
           </div>
 
           <div className="flex min-w-[170px] flex-col gap-2">
