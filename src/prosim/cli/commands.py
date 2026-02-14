@@ -56,13 +56,15 @@ def generate_cmd(description: str, output: str, model: str | None) -> None:
         # Show Mermaid preview
         mermaid = generate_mermaid(workflow)
         console.print("\n[bold]Mermaid Diagram:[/]")
-        console.print(f"```mermaid\n{mermaid}\n```")
+        console.print(f"```mermaid\n{mermaid}\n```", markup=False)
 
     except EnvironmentError as e:
-        console.print(f"[bold red]Error:[/] {e}")
+        console.print("[bold red]Error:[/] ", end="")
+        console.print(str(e), markup=False)
         sys.exit(1)
     except Exception as e:
-        console.print(f"[bold red]Generation failed:[/] {e}")
+        console.print("[bold red]Generation failed:[/] ", end="")
+        console.print(str(e), markup=False)
         sys.exit(1)
 
 
@@ -212,7 +214,7 @@ def export_cmd(workflow_file: str, fmt: str, output: str | None) -> None:
         Path(output).write_text(result)
         console.print(f"[bold green]Exported to {output}[/]")
     else:
-        console.print(result)
+        console.print(result, markup=False)
 
 
 @click.command()
