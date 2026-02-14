@@ -2,12 +2,11 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { WorkflowGraph, SimulationResults } from "@/lib/types";
-import { simulate, exportMermaid } from "@/lib/api";
+import { simulate } from "@/lib/api";
 
 interface ProSimState {
   workflow: WorkflowGraph | null;
   results: SimulationResults | null;
-  mermaidCode: string | null;
   simulating: boolean;
   error: string | null;
   volumePerHour: number;
@@ -18,7 +17,6 @@ export function useProSim() {
   const [state, setState] = useState<ProSimState>({
     workflow: null,
     results: null,
-    mermaidCode: null,
     simulating: false,
     error: null,
     volumePerHour: 100,
@@ -41,19 +39,15 @@ export function useProSim() {
 
       setState((s) => ({ ...s, simulating: true, error: null }));
       try {
-        const [results, mermaid] = await Promise.all([
-          simulate(wf, {
-            mode: "deterministic",
-            num_transactions: numTx,
-            volume_per_hour: volume,
-          }, controller.signal),
-          exportMermaid(wf, undefined, false, controller.signal),
-        ]);
+        const results = await simulate(wf, {
+          mode: "deterministic",
+          num_transactions: numTx,
+          volume_per_hour: volume,
+        }, controller.signal);
         if (!controller.signal.aborted) {
           setState((s) => ({
             ...s,
             results,
-            mermaidCode: mermaid,
             simulating: false,
           }));
         }
@@ -72,7 +66,7 @@ export function useProSim() {
 
   const setWorkflow = useCallback(
     (wf: WorkflowGraph) => {
-      setState((s) => ({ ...s, workflow: wf, results: null, mermaidCode: null, error: null }));
+      setState((s) => ({ ...s, workflow: wf, results: null, error: null }));
       const { volumePerHour, numTransactions } = latestRef.current;
       runSimulation(wf, volumePerHour, numTransactions);
     },

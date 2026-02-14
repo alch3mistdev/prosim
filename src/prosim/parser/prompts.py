@@ -36,6 +36,7 @@ CRITICAL - Graph structure requirements:
 2. Every node MUST appear in at least one edge — either as source or target. No orphaned nodes.
 3. Edges must form a connected flow from start to end. Use source/target IDs that EXACTLY match the node "id" field (same spelling, underscores, no typos).
 4. For each edge, source and target must be valid node IDs from your nodes list.
+5. If max_nodes is specified, the total number of nodes (including start and end) MUST NOT exceed that limit. Prioritize the most essential steps.
 
 Example of correct edge format (node IDs must match exactly):
   nodes: [{"id": "start", ...}, {"id": "validate_invoice", ...}, {"id": "end", ...}]

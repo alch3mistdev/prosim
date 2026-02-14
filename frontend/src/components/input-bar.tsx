@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Sparkles, Upload, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import type { WorkflowGraph } from "@/lib/types";
 import { generateWorkflow, parseWorkflow } from "@/lib/api";
 
@@ -13,6 +14,7 @@ interface InputBarProps {
 
 export function InputBar({ onWorkflowLoaded }: InputBarProps) {
   const [description, setDescription] = useState("");
+  const [maxNodes, setMaxNodes] = useState<number | "">(25);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -22,7 +24,9 @@ export function InputBar({ onWorkflowLoaded }: InputBarProps) {
     setLoading(true);
     setError(null);
     try {
-      const wf = await generateWorkflow(description);
+      const wf = await generateWorkflow(description, {
+        max_nodes: maxNodes === "" ? undefined : maxNodes,
+      });
       onWorkflowLoaded(wf);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
@@ -67,6 +71,26 @@ export function InputBar({ onWorkflowLoaded }: InputBarProps) {
           }}
         />
         <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-muted whitespace-nowrap">Max nodes</span>
+            <Input
+              type="number"
+              value={maxNodes}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "") setMaxNodes("");
+                else {
+                  const n = parseInt(v, 10);
+                  if (!isNaN(n)) setMaxNodes(Math.min(100, Math.max(3, n)));
+                }
+              }}
+              placeholder="∞"
+              className="w-16 h-8 text-xs"
+              min={3}
+              max={100}
+              title="Max nodes in workflow (3–100, empty = no limit)"
+            />
+          </div>
           <Button
             onClick={handleGenerate}
             disabled={!description.trim() || loading}

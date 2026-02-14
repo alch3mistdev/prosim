@@ -35,7 +35,8 @@ console = Console()
 @click.argument("description")
 @click.option("--output", "-o", default="workflow.json", help="Output file path")
 @click.option("--model", "-m", default=None, help="Claude model to use")
-def generate_cmd(description: str, output: str, model: str | None) -> None:
+@click.option("--max-nodes", type=int, default=None, help="Max nodes (incl. start/end), e.g. 15", show_default=True)
+def generate_cmd(description: str, output: str, model: str | None, max_nodes: int | None) -> None:
     """Generate a workflow graph from a natural language description.
 
     DESCRIPTION is the process to model (e.g., "invoice processing system").
@@ -46,7 +47,7 @@ def generate_cmd(description: str, output: str, model: str | None) -> None:
     console.print(f"[bold blue]Generating workflow for:[/] {description}")
 
     try:
-        raw = generate_workflow_raw(description, model=model)
+        raw = generate_workflow_raw(description, model=model, max_nodes=max_nodes)
         workflow = postprocess_raw_workflow(raw)
         save_graph(workflow, output)
         console.print(f"[bold green]Workflow saved to {output}[/]")

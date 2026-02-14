@@ -12,6 +12,7 @@ from prosim.parser.prompts import SYSTEM_PROMPT, WORKFLOW_TOOL
 def generate_workflow_raw(
     domain_description: str,
     model: str | None = None,
+    max_nodes: int | None = None,
 ) -> dict:
     """Call Claude API to generate a structured workflow from a domain description.
 
@@ -31,18 +32,16 @@ def generate_workflow_raw(
 
     client = anthropic.Anthropic(api_key=api_key)
 
+    user_content = f"Generate a detailed workflow model for the following process:\n\n{domain_description}"
+    if max_nodes is not None:
+        user_content += f"\n\nIMPORTANT: Limit the workflow to at most {max_nodes} nodes total (including start and end). Focus on the most essential steps."
     message = client.messages.create(
         model=model,
         max_tokens=4096,
         system=SYSTEM_PROMPT,
         tools=[WORKFLOW_TOOL],
         tool_choice={"type": "tool", "name": "generate_workflow"},
-        messages=[
-            {
-                "role": "user",
-                "content": f"Generate a detailed workflow model for the following process:\n\n{domain_description}",
-            }
-        ],
+        messages=[{"role": "user", "content": user_content}],
     )
 
     # Extract tool use result

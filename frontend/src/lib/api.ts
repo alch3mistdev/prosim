@@ -38,9 +38,14 @@ async function post<T>(
 /** Generate a workflow from a natural-language description via Claude API. */
 export async function generateWorkflow(
   description: string,
+  opts?: { max_nodes?: number },
   signal?: AbortSignal,
 ): Promise<WorkflowGraph> {
-  return post<WorkflowGraph>("/workflow/generate", { description }, signal);
+  return post<WorkflowGraph>(
+    "/workflow/generate",
+    { description, max_nodes: opts?.max_nodes ?? undefined },
+    signal,
+  );
 }
 
 /** Validate and normalise an uploaded workflow JSON. */

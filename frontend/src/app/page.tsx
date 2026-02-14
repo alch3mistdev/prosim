@@ -1,7 +1,7 @@
 "use client";
 
 import { InputBar } from "@/components/input-bar";
-import { WorkflowDiagram } from "@/components/workflow-diagram";
+import { WorkflowGraphView } from "@/components/workflow-graph";
 import { MetricsCards } from "@/components/metrics-cards";
 import { NodeTable } from "@/components/node-table";
 import { WhatIfPanel } from "@/components/whatif-panel";
@@ -13,7 +13,6 @@ export default function Home() {
   const {
     workflow,
     results,
-    mermaidCode,
     simulating,
     error,
     volumePerHour,
@@ -90,7 +89,7 @@ export default function Home() {
             {/* Zone 2: Diagram + Metrics */}
             <section className="grid grid-cols-1 lg:grid-cols-5 gap-6">
               <div className="lg:col-span-3">
-                <WorkflowDiagram mermaidCode={mermaidCode} loading={simulating && !mermaidCode} />
+                <WorkflowGraphView workflow={workflow} results={results} loading={simulating} />
               </div>
               <div className="lg:col-span-2">
                 <MetricsCards results={results} />

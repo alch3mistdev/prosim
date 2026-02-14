@@ -33,6 +33,7 @@ router = APIRouter()
 class GenerateRequest(BaseModel):
     description: str
     model: str | None = None
+    max_nodes: int | None = Field(default=None, ge=3, le=100, description="Max nodes (incl. start/end)")
 
 
 class ParseRequest(BaseModel):
@@ -92,7 +93,7 @@ def workflow_generate(req: GenerateRequest) -> dict[str, Any]:
         from prosim.parser.client import generate_workflow_raw
         from prosim.parser.postprocess import postprocess_raw_workflow
 
-        raw = generate_workflow_raw(req.description, model=req.model)
+        raw = generate_workflow_raw(req.description, model=req.model, max_nodes=req.max_nodes)
         wf = postprocess_raw_workflow(raw, strict=True)
         return graph_to_json(wf)
     except EnvironmentError as exc:
