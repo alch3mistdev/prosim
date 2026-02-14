@@ -101,7 +101,7 @@ def test_export_mermaid():
         wf_path = _create_test_workflow(tmpdir)
         result = runner.invoke(cli, ["export", wf_path, "-f", "mermaid"])
         assert result.exit_code == 0
-        assert "graph LR" in result.output
+        assert "flowchart LR" in result.output
 
 
 def test_export_json():

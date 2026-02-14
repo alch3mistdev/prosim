@@ -6,14 +6,14 @@ from prosim.graph.models import EdgeType, NodeType, WorkflowGraph
 from prosim.simulation.results import SimulationResults
 
 
-# Mermaid shape mapping for BPMN-style rendering
+# Mermaid shape mapping for BPMN-style rendering (v11-compatible)
 _NODE_SHAPES = {
     NodeType.START: ("([", "])"),       # Stadium shape for start
     NodeType.END: ("([", "])"),         # Stadium shape for end
     NodeType.HUMAN: ("[/", "/]"),       # Parallelogram for human tasks
     NodeType.API: ("[[", "]]"),         # Subroutine for API calls
     NodeType.ASYNC: ("[[", "]]"),       # Subroutine for async
-    NodeType.BATCH: ("[|", "|]"),       # Odd shape for batch
+    NodeType.BATCH: ("[", "]"),         # Rectangle for batch
     NodeType.DECISION: ("{", "}"),      # Diamond for decisions
     NodeType.PARALLEL_GATEWAY: ("{{", "}}"),  # Hexagon for parallel
     NodeType.WAIT: ("(", ")"),          # Rounded for wait
@@ -44,20 +44,21 @@ def generate_mermaid(
         results: Optional simulation results to annotate nodes with metrics.
         show_metrics: Whether to show metrics on nodes (requires results).
     """
-    lines = ["graph LR"]
+    lines = ["flowchart LR"]
 
     # Generate node definitions
     for node in workflow.nodes:
         open_delim, close_delim = _NODE_SHAPES.get(node.node_type, ("[", "]"))
-        label = _escape(node.name)
+        label = node.name
 
         if show_metrics and results:
             nm = results.get_node_metrics(node.id)
             if nm and nm.transactions_processed > 0:
-                label += f"\\n{nm.avg_time:.1f}s | ${nm.avg_cost:.2f}"
+                label += f"\n{nm.avg_time:.1f}s / ${nm.avg_cost:.2f}"
 
         safe_id = _safe_id(node.id)
-        lines.append(f"    {safe_id}{open_delim}\"{label}\"{close_delim}")
+        escaped_label = _escape(label)
+        lines.append(f"    {safe_id}{open_delim}\"{escaped_label}\"{close_delim}")
 
     lines.append("")
 
@@ -75,7 +76,7 @@ def generate_mermaid(
 
         label = ""
         if edge.condition:
-            label = _escape(edge.condition)
+            label = _escape_edge(edge.condition)
         elif edge.probability < 1.0:
             label = f"{edge.probability:.0%}"
 
@@ -105,10 +106,30 @@ def generate_mermaid(
 
 
 def _safe_id(node_id: str) -> str:
-    """Convert node ID to a Mermaid-safe identifier."""
-    return node_id.replace("-", "_").replace(" ", "_").replace(".", "_")
+    """Convert node ID to a Mermaid-safe identifier.
+
+    Prefixes with ``n_`` to avoid conflicts with Mermaid reserved words
+    (``end``, ``graph``, ``subgraph``, etc.).
+    """
+    safe = node_id.replace("-", "_").replace(" ", "_").replace(".", "_")
+    return f"n_{safe}"
 
 
 def _escape(text: str) -> str:
-    """Escape special Mermaid characters in labels."""
-    return text.replace('"', "'").replace("\n", "\\n")
+    """Escape special Mermaid characters in labels (v11-compatible).
+
+    Handles: ``#`` (entity prefix), ``"`` (label delimiter), ``$`` (KaTeX
+    trigger in v11+), and newlines (converted to ``<br/>`` for HTML labels).
+    """
+    text = text.replace("#", "#35;")    # Must escape # first (before adding entity refs)
+    text = text.replace('"', "'")       # Quotes would break label delimiters
+    text = text.replace("$", "#36;")    # Dollar triggers KaTeX math mode in Mermaid v11+
+    text = text.replace("\n", "<br/>")  # HTML line breaks for multi-line labels
+    return text
+
+
+def _escape_edge(text: str) -> str:
+    """Escape text for Mermaid edge labels (between ``|`` delimiters)."""
+    text = _escape(text)
+    text = text.replace("|", "#124;")   # Pipe would close the edge label
+    return text
