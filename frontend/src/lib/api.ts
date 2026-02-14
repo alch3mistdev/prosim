@@ -22,7 +22,14 @@ async function post<T>(
     signal,
   });
   if (!res.ok) {
-    const detail = await res.text();
+    const text = await res.text();
+    let detail = text;
+    try {
+      const json = JSON.parse(text) as { detail?: string };
+      if (typeof json.detail === "string") detail = json.detail;
+    } catch {
+      /* use raw text */
+    }
     throw new Error(`API error ${res.status}: ${detail}`);
   }
   return res.json() as Promise<T>;

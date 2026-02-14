@@ -90,6 +90,12 @@ def workflow_generate(req: GenerateRequest) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        # Anthropic API errors, postprocess KeyError/ValueError, etc.
+        detail = str(exc) or "Workflow generation failed"
+        if isinstance(exc, (KeyError, ValueError, TypeError)):
+            detail = f"Workflow generation produced invalid output: {exc}"
+        raise HTTPException(status_code=500, detail=detail) from exc
 
 
 @router.post("/workflow/parse")
