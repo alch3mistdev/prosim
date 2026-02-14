@@ -154,6 +154,50 @@ def test_postprocess_strict_raises_on_no_start():
         postprocess_raw_workflow(raw, strict=True)
 
 
+def test_postprocess_connectivity_repair_start_end_split():
+    """When start and end are in different components, connect them."""
+    raw = {
+        "name": "Split",
+        "description": "",
+        "nodes": [
+            {"id": "start", "name": "Start", "node_type": "start"},
+            {"id": "a", "name": "A", "node_type": "api"},
+            {"id": "orphan", "name": "Orphan", "node_type": "api"},
+            {"id": "end", "name": "End", "node_type": "end"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            # a and orphan disconnected; end isolated
+        ],
+    }
+    wf = postprocess_raw_workflow(raw, strict=True)
+    issues = validate_graph(wf)
+    assert not any("not weakly connected" in i.lower() for i in issues)
+
+
+def test_postprocess_connectivity_repair():
+    """Disconnected components get connected to main flow."""
+    raw = {
+        "name": "Disconnected",
+        "description": "",
+        "nodes": [
+            {"id": "start", "name": "Start", "node_type": "start"},
+            {"id": "a", "name": "A", "node_type": "api"},
+            {"id": "end", "name": "End", "node_type": "end"},
+            {"id": "orphan", "name": "Orphan", "node_type": "api"},
+        ],
+        "edges": [
+            {"source": "start", "target": "a"},
+            {"source": "a", "target": "end"},
+            # orphan has no edges - disconnected component
+        ],
+    }
+    wf = postprocess_raw_workflow(raw, strict=True)
+    assert len(wf.edges) >= 3  # original 2 + repair adds a -> orphan, orphan -> end
+    issues = validate_graph(wf)
+    assert not any("not weakly connected" in i.lower() for i in issues)
+
+
 def test_postprocess_non_strict_logs_warnings():
     """Non-strict mode logs warnings but returns workflow."""
     raw = {

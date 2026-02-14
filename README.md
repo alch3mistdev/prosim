@@ -39,18 +39,26 @@ npm install
 
 ### Quick Start (Web Dashboard)
 
-Start both the API server and the Next.js dev server:
+**Option A: Single command (recommended)**
+
+```bash
+./start.sh
+```
+
+**Option B: Two terminals**
 
 ```bash
 # Terminal 1: Start the FastAPI backend
 prosim serve --port 8000
 
-# Terminal 2: Start the Next.js frontend
+# Terminal 2: Start the Next.js frontend (use direct API URL to avoid proxy timeout)
 cd frontend
-npm run dev
+NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000/api npm run dev
 ```
 
 Open http://localhost:3000. Type a process description, click Generate, and start tweaking.
+
+**Note:** Workflow generation takes 30–60 seconds (Claude API). If you see "socket hang up" or ECONNRESET, the Next.js proxy may be timing out. Use `NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000/api` so the frontend talks directly to the backend.
 
 ### CLI Commands
 
@@ -144,12 +152,22 @@ The Next.js dashboard is a single-page reactive app organized into 5 zones:
 ## Running Tests
 
 ```bash
-# Python backend tests (87 tests)
+# Python backend tests
 pytest tests/ -v
 
 # Build frontend (type checking + production build)
 cd frontend && npx next build
 ```
+
+## Verify API (Manual Check)
+
+With the backend running (`prosim serve --port 8000`), run:
+
+```bash
+./scripts/verify-api.sh
+```
+
+This tests the history, parse, and generate endpoints. Generate requires `ANTHROPIC_API_KEY`.
 
 ## Environment Variables
 
