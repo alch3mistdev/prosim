@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {"severity": "critical", "category": "security", "file": "workflow-diagram.tsx", "description": "Mermaid securityLevel loose + innerHTML = XSS", "status": "resolved"},
+    {"severity": "critical", "category": "security", "file": "routes.py", "description": "Unbounded num_transactions enables DoS", "status": "resolved"},
+    {"severity": "major", "category": "security", "file": "server.py", "description": "Overly permissive CORS wildcards", "status": "resolved"},
+    {"severity": "major", "category": "security", "file": "server.py", "description": "Hardcoded CORS origins", "status": "resolved"},
+    {"severity": "major", "category": "performance", "file": "use-prosim.ts", "description": "Stale closures cause wrong params", "status": "resolved"},
+    {"severity": "major", "category": "performance", "file": "use-prosim.ts", "description": "No AbortController, race conditions", "status": "resolved"},
+    {"severity": "major", "category": "errors", "file": "use-prosim.ts", "description": "Silent error swallowing", "status": "resolved"},
+    {"severity": "major", "category": "errors", "file": "advanced-panel.tsx", "description": "Three silent catch blocks", "status": "resolved"},
+    {"severity": "major", "category": "errors", "file": "routes.py", "description": "Unhandled exceptions in data routes", "status": "resolved"},
+    {"severity": "major", "category": "performance", "file": "node-table.tsx", "description": "Unmemoized cells cause re-render churn", "status": "resolved"},
+    {"severity": "major", "category": "security", "file": "input-bar.tsx", "description": "No file size limit on upload", "status": "resolved"},
+    {"severity": "minor", "category": "ux", "file": "whatif-panel.tsx", "description": "targetId not reset on workflow change", "status": "resolved"},
+    {"severity": "minor", "category": "performance", "file": "whatif-panel.tsx", "description": "useEffect excessive dependencies", "status": "resolved"},
+    {"severity": "minor", "category": "quality", "file": "advanced-panel.tsx", "description": "Download filename not sanitized", "status": "resolved"}
+  ],
+  "summary": {"critical": 2, "major": 9, "minor": 3},
+  "all_resolved": true,
+  "rework_cycle": 1,
+  "verdict": "pass"
+}

@@ -217,9 +217,20 @@ def export_cmd(workflow_file: str, fmt: str, output: str | None) -> None:
 @click.command()
 @click.option("--port", "-p", type=int, default=8501, help="Streamlit port")
 def dashboard_cmd(port: int) -> None:
-    """Launch the Streamlit web dashboard."""
+    """Launch the legacy Streamlit web dashboard."""
     app_path = Path(__file__).parent.parent / "dashboard" / "app.py"
     console.print(f"[bold blue]Launching ProSim Dashboard on port {port}...[/]")
     subprocess.run(
         [sys.executable, "-m", "streamlit", "run", str(app_path), "--server.port", str(port)],
     )
+
+
+@click.command()
+@click.option("--host", default="0.0.0.0", help="Bind host")
+@click.option("--port", "-p", type=int, default=8000, help="API port")
+def serve_cmd(host: str, port: int) -> None:
+    """Start the FastAPI server for the Next.js dashboard."""
+    console.print(f"[bold blue]Starting ProSim API on {host}:{port}[/]")
+    console.print("[dim]Frontend: cd frontend && npm run dev[/]")
+    from prosim.api.server import serve
+    serve(host=host, port=port)

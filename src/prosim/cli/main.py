@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import click
 
-from prosim.cli.commands import dashboard_cmd, export_cmd, generate_cmd, intervene_cmd, simulate_cmd
+from prosim.cli.commands import dashboard_cmd, export_cmd, generate_cmd, intervene_cmd, serve_cmd, simulate_cmd
 
 
 @click.group()
@@ -21,6 +21,7 @@ cli.add_command(simulate_cmd, name="simulate")
 cli.add_command(intervene_cmd, name="intervene")
 cli.add_command(export_cmd, name="export")
 cli.add_command(dashboard_cmd, name="dashboard")
+cli.add_command(serve_cmd, name="serve")
 
 
 if __name__ == "__main__":
