@@ -1,5 +1,9 @@
 # ProSim
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen.svg)](tests/)
+
 Workflow Simulation Engine with Process Mining Capabilities.
 
 Generate, simulate, and optimize business process workflows from natural language descriptions.
@@ -192,3 +196,19 @@ The `/api/history` endpoint is a stub that returns an empty list. Some browser e
 ### Orphaned nodes / graph not weakly connected
 
 These warnings appear when Claude returns a workflow with nodes but missing or incorrect edges. The parser attempts to repair (e.g. infer linear chain when edges are empty, fix hyphen/underscore mismatches). If repair fails, generation returns 500. Use the Retry button in the UI or try a different description.
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for
+guidelines on how to set up your development environment, run tests, and submit
+pull requests. By participating in this project you agree to abide by the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Security
+
+To report a security vulnerability, please follow the steps in
+[SECURITY.md](SECURITY.md). **Do not open a public issue for security reports.**
+
+## License
+
+ProSim is released under the [MIT License](LICENSE).
