@@ -8,6 +8,8 @@ Workflow Simulation Engine with Process Mining Capabilities.
 
 Generate, simulate, and optimize business process workflows from natural language descriptions.
 
+![](assets/screenshot.png)
+
 ## Features
 
 - **Domain Parsing**: Describe a process in natural language, get a BPMN-style workflow graph via Claude API
