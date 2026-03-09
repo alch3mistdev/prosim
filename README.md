@@ -2,11 +2,11 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-103%20passing-brightgreen.svg)](tests/)
 
-Workflow Simulation Engine with Process Mining Capabilities.
+Workflow Simulation Engine — Synthetic Process Modeling and Intervention Testing.
 
-Generate, simulate, and optimize business process workflows from natural language descriptions.
+Unlike process mining (which harvests actual event logs and analyzes timestamps from real systems), ProSim estimates expected process delays from a parameterized model, then lets you test interventions and measure ROI. Generate, simulate, and optimize business process workflows from natural language descriptions.
 
 ![screenshot](./assets/prosim-screen.png)
 
@@ -62,7 +62,7 @@ cd frontend
 NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000/api npm run dev
 ```
 
-Open http://localhost:3000. Type a process description, click Generate, and start tweaking.
+Open http://localhost:3000. Type a process description, click Generate Baseline, and start tweaking.
 
 **Note:** Workflow generation takes 30–60 seconds (Claude API). If you see "socket hang up" or ECONNRESET, the Next.js proxy may be timing out. Use `NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000/api` so the frontend talks directly to the backend.
 
@@ -129,7 +129,7 @@ ProSim/
 │       ├── components/ # Dashboard zones (input-bar, diagram, metrics, node-table, whatif, advanced)
 │       ├── hooks/      # useProSim state management hook
 │       └── lib/        # TypeScript types, API client, utilities
-└── tests/              # 87 tests across all subsystems
+└── tests/              # 103 tests across all subsystems
 ```
 
 ### Frontend Zones
