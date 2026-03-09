@@ -22,6 +22,14 @@ Generate, simulate, and optimize business process workflows from natural languag
 - **Next.js Dashboard**: Modern dark-themed single-page app with live editing and instant re-simulation
 - **Streamlit Dashboard**: Legacy dashboard (still available)
 
+## Screenshots
+
+### Dashboard — Initial State
+
+![ProSim dashboard showing the input bar and empty workflow canvas](https://github.com/user-attachments/assets/dfc00fb2-9ce7-4f82-aa42-b1d96e616855)
+
+*Describe a process, pick an example prompt, or upload a workflow JSON to get started.*
+
 ## Setup
 
 ### Backend
