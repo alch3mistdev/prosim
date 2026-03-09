@@ -7,7 +7,21 @@ name = "prosim"
 version = "0.1.0"
 description = "Workflow Simulation Engine with Process Mining Capabilities"
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.11"
+keywords = ["workflow", "simulation", "process-mining", "bpmn", "monte-carlo", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "anthropic>=0.39.0",
     "networkx>=3.2",
@@ -26,6 +40,11 @@ dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/alch3mistdev/prosim"
+Repository = "https://github.com/alch3mistdev/prosim"
+"Bug Tracker" = "https://github.com/alch3mistdev/prosim/issues"
 
 [project.scripts]
 prosim = "prosim.cli.main:cli"
